@@ -1,0 +1,24 @@
+{
+    "name": "tr_cfpb_ingest_adls_to_snowflake",
+    "properties": {
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "testing_pipele",
+                    "type": "PipelineReference"
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Hour",
+                "interval": 1,
+                "startTime": "2025-07-26T00:00:00",
+                "timeZone": "India Standard Time"
+            }
+        }
+    }
+}
