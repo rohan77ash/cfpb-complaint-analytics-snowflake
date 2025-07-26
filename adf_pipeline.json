@@ -1,37 +1,208 @@
 {
-  "name": "CFPB_Hourly_Ingestion",
-  "properties": {
-    "description": "Ingest CFPB complaints every hour, landing raw JSON files for Snowflake processing.",
-    "activities": [
-      {
-        "name": "Copy_CFPB_API_To_Blob",
-        "type": "Copy",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "1.00:00:00",
-          "retry": 1,
-          "retryIntervalInSeconds": 30,
-          "secureOutput": false,
-          "secureInput": false
+    "name": "p_cfpb_ingestion_adls_to_snowflake",
+    "properties": {
+        "description": "Ingests CFPB complaints for the last hour and saves to Blob Storage for Snowflake loading.",
+        "activities": [
+            {
+                "name": "Copy_CFPB_To_Blob",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Set LastRunTime",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Set CurrentTime",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "RestSource",
+                        "httpRequestTimeout": "00:01:40",
+                        "requestInterval": "00.00:00:00.010"
+                    },
+                    "enableStaging": false
+                }
+            },
+            {
+                "name": "Set CurrentTime",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "CurrentTime",
+                    "value": {
+                        "value": "@utcNow()",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Get LastRunTime",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": true,
+                            "enablePartitionDiscovery": false
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                        }
+                    },
+                    "dataset": {
+                        "referenceName": "ds_last_run",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "FILE_NAME": "lastrun_mod.txt"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Set LastRunTime",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Get LastRunTime",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "LastRunTime",
+                    "value": {
+                        "value": "@activity('Get LastRunTime').output.firstRow.lastrun",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Update LastRuntime",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_CFPB_To_Blob",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "additionalColumns": [
+                            {
+                                "name": "lastrun",
+                                "value": {
+                                    "value": "@variables('CurrentTime')",
+                                    "type": "Expression"
+                                }
+                            }
+                        ],
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": true,
+                            "modifiedDatetimeStart": null,
+                            "modifiedDatetimeEnd": null,
+                            "enablePartitionDiscovery": false
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                        }
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "quoteAllText": true,
+                            "fileExtension": ".txt"
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "ds_last_run",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "FILE_NAME": "lastrun.txt"
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "ds_last_run",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "FILE_NAME": "lastrun_mod.txt"
+                        }
+                    }
+                ]
+            }
+        ],
+        "variables": {
+            "CurrentTime": {
+                "type": "String"
+            },
+            "LastRunTime": {
+                "type": "String"
+            }
         },
-        "userProperties": [],
-        "typeProperties": {
-          "source": {
-            "type": "RestSource",
-            "httpRequestTimeout": "00:01:40"
-          },
-          "sink": {
-            "type": "BlobSink",
-            "writeBatchSize": 0,
-            "writeBatchTimeout": "00:00:00"
-          },
-          "enableStaging": false
-        },
-        "inputs": [
-          {
-            "referenceName": "CFPB_REST_Source",
-            "type": "DatasetReference",
-            "parameters": {
-              "start_date": "@pipeline().parameters.start_date",
-              "end_date": "@pipeline().parameters.end_date"
-           
+        "annotations": []
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
