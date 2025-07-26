@@ -1,0 +1,37 @@
+{
+  "name": "CFPB_Hourly_Ingestion",
+  "properties": {
+    "description": "Ingest CFPB complaints every hour, landing raw JSON files for Snowflake processing.",
+    "activities": [
+      {
+        "name": "Copy_CFPB_API_To_Blob",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "1.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "RestSource",
+            "httpRequestTimeout": "00:01:40"
+          },
+          "sink": {
+            "type": "BlobSink",
+            "writeBatchSize": 0,
+            "writeBatchTimeout": "00:00:00"
+          },
+          "enableStaging": false
+        },
+        "inputs": [
+          {
+            "referenceName": "CFPB_REST_Source",
+            "type": "DatasetReference",
+            "parameters": {
+              "start_date": "@pipeline().parameters.start_date",
+              "end_date": "@pipeline().parameters.end_date"
+           
