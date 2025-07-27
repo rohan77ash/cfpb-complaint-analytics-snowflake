@@ -8,4 +8,4 @@ create or replace storage integration si_blob
 create or replace stage raw_cfpb_ext_stage
   url = 'azure://cfpbdatastorage.blob.core.windows.net/landing-ext-stage/raw'
   storage_integration = my_blob_integration
-  file_format = (type = 'json');
+  file_format = (type = 'JSON');
