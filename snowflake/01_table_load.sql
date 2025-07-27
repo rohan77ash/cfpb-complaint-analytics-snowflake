@@ -23,7 +23,7 @@ copy into raw_cfpb_complaints_csv
 from @raw_cfpb_stage
 file_format = (type = 'CSV');
 
-CREATE OR REPLACE TABLE raw_cfpb_complaints (
+CREATE OR REPLACE TABLE raw_cfpb_complaints_json (
   raw VARIANT
 );
 
