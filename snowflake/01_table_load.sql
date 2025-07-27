@@ -1,4 +1,4 @@
-create or replace table cfpb.data.raw_cfpb_complaints (
+create or replace table cfpb.data.raw_cfpb_complaints_csv (
   date_received DATE,
   product STRING,
   sub_product STRING,
@@ -19,7 +19,16 @@ create or replace table cfpb.data.raw_cfpb_complaints (
   complaint_id STRING
 );
 
-copy into raw_cfpb_complaints
+copy into raw_cfpb_complaints_csv
 from @raw_cfpb_stage
 file_format = (type = 'CSV');
+
+CREATE OR REPLACE TABLE raw_cfpb_complaints (
+  raw VARIANT
+);
+
+copy into raw_cfpb_complaints_json
+from @raw_cfpb_stage
+file_format = (type = 'JSON');
+
 
