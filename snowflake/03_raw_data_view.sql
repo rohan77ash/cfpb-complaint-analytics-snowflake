@@ -1,4 +1,4 @@
-create or replace view cfpb.data.staging_cfpb_complaints as
+create or replace table cfpb.data.staging_cfpb_complaints as
 select
   raw:"_id"::STRING as _id,
   raw:"_index"::STRING as _index,
