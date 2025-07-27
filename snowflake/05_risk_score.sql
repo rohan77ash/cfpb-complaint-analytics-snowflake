@@ -26,3 +26,10 @@ select
   end as risk_score
 from last_90_days
 group by company, state;
+
+
+create or replace view v_company_risk_scores as
+select *
+from company_risk_scores
+order by risk_score desc;
+
