@@ -60,9 +60,3 @@ SELECT
 FROM last_90_days
 GROUP BY company, state;
 
-
-create or replace view cfpb.data.v_complaint_daily_summary as
-select * from cfpb.data.complaint_daily_summary;
-
-create or replace view cfpb.data.v_complaint_spikes as
-select * from cfpb.data.complaint_spikes;
