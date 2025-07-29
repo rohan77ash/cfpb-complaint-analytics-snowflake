@@ -7,6 +7,9 @@ select
 from cfpb.data.staging_cfpb_complaints
 group by company, state, complaint_date;
 
+create or replace view v_complaint_daily_summary as
+select * from complaint_daily_summary;
+
 create or replace table cfpb.data.complaint_spikes as
 select
   company,
@@ -21,3 +24,6 @@ select
          (partition by company, state order by complaint_date)) * 100, 2)
   end as spike_percent
 from cfpb.data.complaint_daily_summary;
+
+create or replace view v_complaint_spikes as
+select * from complaint_spikes;
