@@ -1,3 +1,5 @@
+
+
 CREATE OR REPLACE TASK cfpb.data.daily_refresh_cfpb_pipeline
   WAREHOUSE = my_wh 
   SCHEDULE = 'USING CRON 0 5 * * * UTC'
